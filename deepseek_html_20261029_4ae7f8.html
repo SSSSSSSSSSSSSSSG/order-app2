@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校午餐訂餐系統</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        body {
+            background-color: #e8eaf6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #c5cae9;
+        }
+        .card-header {
+            background-color: #5c6bc0;
+            color: white;
+            padding: 10px 15px;
+            margin: -20px -20px 15px -20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #3f51b5;
+        }
+        button.btn-green {
+            background-color: #4caf50;
+        }
+        button.btn-green:hover {
+            background-color: #388e3c;
+        }
+        button.btn-small {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .summary-box {
+            background-color: #fffde7;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #fff59d;
+            margin-bottom: 15px;
+        }
+        .summary-box p {
+            margin: 5px 0;
+            font-weight: bold;
+            color: #d84315;
+        }
+        .file-io {
+            display: flex;
+            gap: 10px;
+        }
+        .file-io button {
+            flex: 1;
+        }
+        #log-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #555;
+        }
+        #log-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 左欄 -->
+    <div class="column">
+        <!-- 菜單區塊 -->
+        <div class="card">
+            <div class="card-header">🍱 今日菜單</div>
+            <div id="menu-container">
+                <!-- 菜單由 JS 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 訂餐登記區塊 -->
+        <div class="card">
+            <div class="card-header">訂餐登記</div>
+            <div class="form-group">
+                <label>座號 (1 ~ 50)</label>
+                <input type="number" id="seat-input" placeholder="輸入座號" min="1" max="50">
+            </div>
+            <div class="form-group">
+                <label>選擇餐點</label>
+                <select id="meal-select">
+                    <option value="">-- 請選擇餐點 --</option>
+                    <!-- 選項由 JS 動態生成 -->
+                </select>
+            </div>
+            <button onclick="submitOrder()">送出訂單</button>
+        </div>
+    </div>
+
+    <!-- 右欄 -->
+    <div class="column">
+        <!-- 統計報表區塊 -->
+        <div class="card">
+            <div class="card-header">
+                <span>統計報表</span>
+                <button class="btn-small" style="background-color: #3b5998;" onclick="resetData()">重置統計</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>餐點名稱</th>
+                        <th class="text-right">單價</th>
+                        <th class="text-right">數量</th>
+                        <th class="text-right">小計</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body">
+                    <!-- 報表內容由 JS 動態生成 -->
+                </tbody>
+            </table>
+            
+            <div class="summary-box">
+                <p>總訂餐數量：<span id="total-qty">0</span> 筆</p>
+                <p>總金額：$ <span id="total-price">0</span> 元</p>
+            </div>
+        </div>
+
+        <!-- 檔案備份與讀取區塊 -->
+        <div class="card">
+            <div class="card-header">檔案備份與讀取 (File I/O)</div>
+            <div class="file-io">
+                <button class="btn-green" onclick="exportJSON()">匯出 JSON</button>
+                <button class="btn-green" onclick="document.getElementById('import-file').click()">讀取 JSON</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importJSON(event)">
+            </div>
+        </div>
+
+        <!-- 即時登記明細區塊 -->
+        <div class="card">
+            <div class="card-header">即時登記明細紀錄</div>
+            <ul id="log-list">
+                <!-- 紀錄由 JS 動態生成 -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. 初始化資料結構 (內建5項菜單)
+    const menuData = [
+        { id: 1, name: "排骨便當", price: 80, count: 0 },
+        { id: 2, name: "雞腿便當", price: 85, count: 0 },
+        { id: 3, name: "素食便當", price: 70, count: 0 },
+        { id: 4, name: "滷肉飯",   price: 55, count: 0 },
+        { id: 5, name: "貢丸湯",   price: 20, count: 0 }
+    ];
+
+    // 用於儲存詳細的訂單紀錄 (供匯出/讀取使用)
+    let orderLogs = []; 
+
+    // 2. 網頁載入時執行初始化
+    window.onload = function() {
+        renderMenu();
+        renderSelectOptions();
+        renderReport();
+    };
+
+    // 渲染左側菜單
+    function renderMenu() {
+        const container = document.getElementById('menu-container');
+        container.innerHTML = '';
+        menuData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'menu-item';
+            div.innerHTML = `<span>${item.id}. ${item.name}</span> <span>$${item.price}</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    // 渲染下拉選單
+    function renderSelectOptions() {
+        const select = document.getElementById('meal-select');
+        // 保留第一個預設選項
+        select.innerHTML = '<option value="">-- 請選擇餐點 --</option>';
+        menuData.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = `${item.id}. ${item.name} ($${item.price})`;
+            select.appendChild(option);
+        });
+    }
+
+    // 渲染右側統計報表與總計
+    function renderReport() {
+        const tbody = document.getElementById('report-body');
+        tbody.innerHTML = '';
+        let totalQty = 0;
+        let totalPrice = 0;
+
+        menuData.forEach(item => {
+            const subtotal = item.price * item.count;
+            totalQty += item.count;
+            totalPrice += subtotal;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td class="text-right">$${item.price}</td>
+                <td class="text-right">${item.count}</td>
+                <td class="text-right">$${subtotal}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('total-qty').textContent = totalQty;
+        document.getElementById('total-price').textContent = totalPrice;
+    }
+
+    // 3. 處理送出訂單
+    function submitOrder() {
+        const seatInput = document.getElementById('seat-input');
+        const mealSelect = document.getElementById('meal-select');
+        
+        const seat = parseInt(seatInput.value);
+        const mealId = parseInt(mealSelect.value);
+
+        // 驗證座號
+        if (isNaN(seat) || seat < 1 || seat > 50) {
+            alert("錯誤：請輸入有效的座號 (1 ~ 50)！");
+            seatInput.value = ''; // 清空輸入
+            return;
+        }
+
+        // 驗證餐點
+        if (isNaN(mealId)) {
+            alert("錯誤：請選擇餐點！");
+            return;
+        }
+
+        // 尋找對應的餐點並增加數量
+        const meal = menuData.find(m => m.id === mealId);
+        if (meal) {
+            meal.count++;
+            
+            // 紀錄詳細日誌
+            const logEntry = { seat: seat, mealName: meal.name, price: meal.price };
+            orderLogs.push(logEntry);
+            
+            // 更新 UI
+            addLogToUI(logEntry);
+            renderReport();
+            
+            // 清空輸入框，方便下一筆輸入
+            seatInput.value = '';
+            mealSelect.value = '';
+            seatInput.focus(); // 將游標移回座號輸入框
+        }
+    }
+
+    // 將紀錄加入下方的明細列表
+    function addLogToUI(logEntry) {
+        const logList = document.getElementById('log-list');
+        const li = document.createElement('li');
+        // 取得當前時間
+        const time = new Date().toLocaleTimeString();
+        li.textContent = `[${time}] 座號 ${logEntry.seat} 訂購了 ${logEntry.mealName}`;
+        logList.appendChild(li);
+        // 自動滾動到最下方
+        logList.scrollTop = logList.scrollHeight;
+    }
+
+    // 4. 重置系統
+    function resetData() {
+        if(confirm("確定要清除所有訂餐紀錄與統計嗎？")) {
+            menuData.forEach(item => item.count = 0);
+            orderLogs = [];
+            document.getElementById('log-list').innerHTML = '';
+            document.getElementById('seat-input').value = '';
+            document.getElementById('meal-select').value = '';
+            renderReport();
+        }
+    }
+
+    // 5. 匯出 JSON
+    function exportJSON() {
+        // 準備要匯出的資料 (包含菜單統計與詳細紀錄)
+        const exportData = {
+            menuStats: menuData,
+            logs: orderLogs
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lunch_orders_${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 6. 讀取 JSON
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // 基本驗證
+                if (importedData.menuStats && importedData.logs) {
+                    // 更新全域變數 (注意：這裡直接覆蓋陣列內容以保持引用)
+                    menuData.length = 0;
+                    importedData.menuStats.forEach(item => menuData.push(item));
+                    
+                    orderLogs = importedData.logs;
+
+                    // 重新渲染畫面
+                    renderReport();
+                    
+                    // 重新渲染明細紀錄
+                    const logList = document.getElementById('log-list');
+                    logList.innerHTML = '';
+                    orderLogs.forEach(log => {
+                        const li = document.createElement('li');
+                        li.textContent = `座號 ${log.seat} 訂購了 ${log.mealName}`;
+                        logList.appendChild(li);
+                    });
+
+                    alert("資料讀取成功！");
+                } else {
+                    alert("錯誤：JSON 格式不符，無法讀取。");
+                }
+            } catch (error) {
+                alert("錯誤：無法解析 JSON 檔案。");
+                console.error(error);
+            }
+        };
+        reader.readAsText(file);
+        // 清空 input 的值，允許重複上傳同一個檔案
+        event.target.value = ''; 
+    }
+</script>
+
+</body>
+</html>
